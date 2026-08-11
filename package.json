@@ -1,0 +1,22 @@
+{
+  "name": "secureloginapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-openid-connect": "^3.3.0",
+    "express-session": "^1.19.0",
+    "ibmcloud-appid": "^7.0.1",
+    "mongoose": "^9.9.1",
+    "passport": "^0.7.0"
+  }
+}
