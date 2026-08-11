@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; }
+        .post-form { margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; background-color: #f9f9f9; }
+        .post-form input, .post-form textarea { width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .post-form button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .post-form button:hover { background-color: #0056b3; }
+        .user-post { border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .user-post button { background-color: #dc3545; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        .user-post button:hover { background-color: #c82333; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 id="welcome-message">Welcome to your Dashboard!</h1>
+        <p><a href="/logout">Logout</a></p>
+    </div>
+
+    <hr>
+
+    <h2>Create New Post</h2>
+    <div class="post-form">
+        <input type="text" id="postTitle" placeholder="Post Title">
+        <textarea id="postContent" rows="5" placeholder="Post Content"></textarea>
+        <button onclick="createPost()">Add Post</button>
+    </div>
+
+    <h2>Your Posts</h2>
+    <div id="user-posts">
+        <p>Loading your posts...</p>
+    </div>
+
+    <script>
+        async function fetchUserProfile() {
+            const response = await fetch('/api/user');
+            if (response.ok) {
+                const user = await response.json();
+                document.getElementById('welcome-message').textContent = `Welcome, ${user.name || user.email}!`;
+            } else {
+                console.error('Failed to fetch user profile.');
+                window.location.href = '/login'; // Redirect if session expired or not authenticated
+            }
+        }
+
+        async function fetchUserPosts() {
+            const response = await fetch('/api/posts');
+            if (response.ok) {
+                const posts = await response.json();
+                const postsContainer = document.getElementById('user-posts');
+                postsContainer.innerHTML = ''; // Clear existing posts
+                if (posts.length === 0) {
+                    postsContainer.innerHTML = '<p>You have no posts yet. Create one above!</p>';
+                } else {
+                    posts.forEach(post => {
+                        const postElement = document.createElement('div');
+                        postElement.className = 'user-post';
+                        postElement.innerHTML = `
+                            <div>
+                                <h3>${post.title}</h3>
+                                <p>${post.content}</p>
+                                <small>Created: ${new Date(post.createdAt).toLocaleDateString()}</small>
+                            </div>
+                            <button onclick="deletePost('${post._id}')">Delete</button>
+                        `;
+                        postsContainer.appendChild(postElement);
+                    });
+                }
+            } else {
+                console.error('Failed to fetch user posts.');
+            }
+        }
+
+        async function createPost() {
+            const title = document.getElementById('postTitle').value;
+            const content = document.getElementById('postContent').value;
+
+            const response = await fetch('/api/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content })
+            });
+
+            if (response.ok) {
+                document.getElementById('postTitle').value = '';
+                document.getElementById('postContent').value = '';
+                fetchUserPosts(); // Refresh posts list
+            } else {
+                alert('Failed to create post. Please try again.');
+            }
+        }
+
+        async function deletePost(postId) {
+            if (!confirm('Are you sure you want to delete this post?')) {
+                return;
+            }
+            const response = await fetch(`/api/posts/${postId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                fetchUserPosts(); // Refresh posts list
+            } else {
+                alert('Failed to delete post. You might not have permission.');
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchUserProfile();
+            fetchUserPosts();
+        });
+    </script>
+</body>
+</html>
